@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+
+    @font-face {
+        font-family: 'Proto Grotesk';
+         src: local('☺️'),
+          url('https://static.istories.media/public/fonts/Proto Grotesk-Bold-Web.woff2') format('woff2'),
+          url('https://static.istories.media/public/fonts/Proto Grotesk-Bold-Web.woff') format('woff'),
+          url('https://static.istories.media/public/fonts/Proto Grotesk-Bold-Web.ttf') format('truetype');
+         font-weight: bold;
+         font-style: normal;
+         font-display: swap;
+    }
+    html {
+        width: 100%;
+        height: 100%;
+        overflow:  hidden;
+}
+    body {
+      background-color: #fff;
+        font: normal 15px "Proto Grotesk";
+    }
+    text {
+        font: normal 15px "Proto Grotesk";
+        fill: #676767;
+    }
+
+
+.axis {
+    fill: #676767;
+    font: normal 15px "Proto Grotesk";
+}
+
+.axis path,
+.axis line {
+  fill: none;;
+  stroke: lightgrey;
+  stroke-width: 1px;
+  shape-rendering: crispEdges;
+}
+
+.line {
+  fill: none;
+  stroke: #99372e;
+  stroke-width: 3px;
+}
+
+.label {
+    fill: #676767;
+  background-color: #fff;
+  font: normal 15px "Proto Grotesk";
+}
+
+.zero {
+  stroke: #BF9F99;
+  stroke-width: 1px;
+    stroke-opacity: 0.8;
+}
+
+
+</style>
+<body>
+<g class="grid"></g>
+  <svg></svg>
+  <script src="https://d3js.org/d3.v4.min.js"></script>
+  <script>
+
+      var ru_RU = {
+      "dateTime": "%A, %e %B %Y г. %X",
+      "date": "%d-%m-%Y",
+      "time": "%H:%M:%S",
+      "periods": ["AM", "PM"],
+      "days": ["воскресенье", "понедельник", "вторник", "среда", "четверг", "пятница", "суббота"],
+      "shortDays": ["вс", "пн", "вт", "ср", "чт", "пт", "сб"],
+      "months": ["январь", "февраль", "март", "апрель", "май", "июнь", "июль", "август", "сентябрь", "октябрь", "ноябрь", "декабрь"],
+      "shortMonths": ["янв", "фев", "мар", "апр", "май", "июн", "июл", "авг", "сен", "окт", "ноя", "дек"]
+    }
+
+    var RU = d3.timeFormatDefaultLocale(ru_RU);
+
+      var margin = {top: 45, right: 400, bottom: 115, left: 50},
+        width = 900 - margin.left - margin.right,
+        height = 500 - margin.top - margin.bottom;
+
+    var widthValue = width + margin.left + margin.right;
+    var heightValue = height + margin.top + margin.bottom;
+
+
+      var svg = d3.select("svg").attr("viewBox", `0 0 ${widthValue} ${heightValue}`).append("g")
+        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+        var parseTime = d3.timeParse("%d-%m-%Y")
+            bisectDate = d3.bisector(function(d) { return d.year; }).left;
+
+        var x = d3.scaleLinear().range([0, width]);
+        var y = d3.scaleTime().range([height, 0]);
+
+        d3.json("data.json", function(error, data) {
+          if (error) throw error;
+
+          data.forEach(function(d) {
+            d.year = parseTime(d.year);
+            d.value = +d.value;
+          });
+
+          y.domain(d3.extent(data, function(d) { return d.year; }).reverse());
+          x.domain([0, d3.max(data, function(d) { return d.value; }) ]);
+
+
+        var g = svg.append("g")
+          .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+            var line = d3.line()
+              .x(function(d) { return x(d.value); })
+              .y(function(d) { return y(d.year); })
+              .curve(d3.curveStepAfter);
+
+              svg.append("text")
+                .attr("x", margin.left)
+                .attr("y", 0 - (margin.top-50 / 2))
+                .style("font-size", "25px")
+                .style("fill", "#676767")
+                .text("Сумма денежных переводов (в млрд рублей) в страны СНГ ");
+
+             svg.append("text")
+                .attr("x", margin.left)
+                .attr("y", 0 - (margin.top-110 / 2))
+                .style("font-size", "25px")
+                .style("fill", "#676767")
+                .text("сократилась по сравнению с прошлым годом");
+
+             svg.append("text")
+                .attr("x", margin.left)
+                .attr("y", 0 - (margin.top-480))
+                .style("font-size", "17px")
+                .style("fill", "#676767")
+                .text("Важные истории, 2020");
+
+            svg.append("text")
+                .attr("x", margin.left)
+                .attr("y", 0 - (margin.top-460))
+                .style("font-size", "17px")
+                .style("fill", "#676767")
+                .text("Данные: Центробанк РФ");
+
+
+              g.append("g")
+                .attr("class", "axis axis--x")
+                .attr("transform", "translate(0," + height + ")")
+                  .style('fill', "#676767");
+
+              g.append("g")
+                .attr("class", "axis axis--y")
+                .call(d3.axisLeft(y));
+
+              g.append("line")
+                .attr("class", "zero")
+                .attr("stroke-dasharray", "2,2")
+                .attr("x1", x(31.))
+                .attr("y1", 5)
+                .attr("x2", x(24.7))
+                .attr("y2", height)
+                .attr("transform", "translate(30,0)");
+
+              g.append("path")
+                .datum(data)
+                .attr("class", "line")
+                .attr("transform", "translate(30,0)")
+                .attr("d", line);
+
+              g.append("g")
+                .attr("class", "rects")
+                .selectAll("text")
+                .data(data)
+                .enter()
+                .append("rect")
+                  .attr("x", function (d) { return x(d.value)-2; })
+                  .attr("y", function (d) { return y(d.year); })
+                  .attr("width", 35)
+                  .attr("height", 20)
+                  .attr("transform", "translate(15,-15)")
+                  .style("fill", "#fff");
+
+              g.append("g")
+                .attr("class", "labels")
+                .selectAll("text")
+                .data(data)
+                .enter()
+                .append("text")
+                  .attr("class", "label")
+                  .attr("x", function(d) { return x(d.value); })
+                  .attr("y", function(d) { return y(d.year); })
+                  .attr("text-anchor", "middle")
+                  .attr("transform", "translate(30,0)")
+                  .text(function(d) {
+                    return d.value.toString().replace('.', ',') + "";
+
+                  });
+});
+  </script>
+</body>
+</html>
